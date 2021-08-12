@@ -1,13 +1,24 @@
 import * as core from '@actions/core'
 import Codeowners from 'codeowners'
-// import {Octokit} from '@octokit/action'
+import {Octokit} from '@octokit/action'
+import {cleanEnv, str} from 'envalid'
+
+const env = cleanEnv(process.env, {
+  GITHUB_REPOSITORY: str(),
+  GITHUB_REF: str()
+})
 
 // https://github.com/octokit/action.js/#create-an-issue-using-rest-api
-const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
+const [owner, repo] = env.GITHUB_REPOSITORY.split('/')
 
 // https://github.com/actions/checkout/issues/58#issuecomment-545446510
 const PULL_NUMBER_REGEX = /refs\/pull\/(\d+)\/merge/
-const [, pull_number] = process.env.GITHUB_REF.match(PULL_NUMBER_REGEX)
+
+let pull_number
+if (PULL_NUMBER_REGEX.test(env.GITHUB_REF)) {
+  // @ts-ignore
+  pull_number = env.GITHUB_REF.match(PULL_NUMBER_REGEX)[1]
+}
 const octokit = new Octokit()
 
 const codeowners = new Codeowners()
@@ -21,7 +32,7 @@ for (const ownerEntry of codeowners.ownerEntries) {
     }
   }
 }
-console.info(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`)
+core.debug(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`)
 
 // One argument: the reviewer threshold.
 // One output: `aboveReviewerThreshold`
@@ -34,7 +45,7 @@ async function run(): Promise<void> {
       pull_number
     })
     const filenames = files.data.map(file => file.filename)
-    console.info(`Files being checked: ${JSON.stringify(files, null, 2)}`)
+    core.debug(`Files being checked: ${JSON.stringify(files, null, 2)}`)
 
     const ownerSet = new Set()
     const teamOwnerSet = new Set()
@@ -50,8 +61,8 @@ async function run(): Promise<void> {
         }
       }
     }
-    console.info(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
-    console.info(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+    core.debug(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+    core.debug(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
 
     const OWNER_THRESHOLD = Number.parseInt(
       core.getInput('reviewerThreshold'),
