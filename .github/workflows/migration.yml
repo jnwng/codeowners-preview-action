@@ -21,6 +21,8 @@ jobs:
         # How to figure out the buckets?
         # Get all teams via CODEOWNERS
         # Once you have teams, reverse map CODEOWNERS to pass glob statements to the farming script
+        # Buckets will have the codeowner + the list of bundles
+        # Report back to comment on original PR
         run: |
           BUCKETS=["static/bundles/partners-graphql/**", "static/bundles/ondemand/**"]
           echo '::set-output name=result::$BUCKETS'
@@ -36,4 +38,4 @@ jobs:
       matrix:
         bucket: ${{ fromJson(needs.getBuckets.outputs.buckets) }}
     steps:
-      - echo ${{ matrix.bucket }}
+      - run: echo ${{ matrix.bucket }}
