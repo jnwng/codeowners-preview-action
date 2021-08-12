@@ -14,10 +14,9 @@ const [owner, repo] = env.GITHUB_REPOSITORY.split('/')
 // https://github.com/actions/checkout/issues/58#issuecomment-545446510
 const PULL_NUMBER_REGEX = /refs\/pull\/(\d+)\/merge/
 
-let pull_number
+let pull_number: Number
 if (PULL_NUMBER_REGEX.test(env.GITHUB_REF)) {
-  // @ts-ignore
-  pull_number = env.GITHUB_REF.match(PULL_NUMBER_REGEX)[1]
+  pull_number = parseInt(env.GITHUB_REF.match(PULL_NUMBER_REGEX)![1], 10)
 }
 const octokit = new Octokit()
 
