@@ -78,7 +78,7 @@ function run() {
                 pull_number
             });
             const filenames = files.data.map(file => file.filename);
-            core.debug(`Files being checked: ${JSON.stringify(files, null, 2)}`);
+            core.debug(`Files being checked: ${JSON.stringify(filenames, null, 2)}`);
             const ownerSet = new Set();
             const teamOwnerSet = new Set();
             for (const filename of filenames) {

@@ -14,7 +14,7 @@ const [owner, repo] = env.GITHUB_REPOSITORY.split('/')
 // https://github.com/actions/checkout/issues/58#issuecomment-545446510
 const PULL_NUMBER_REGEX = /refs\/pull\/(\d+)\/merge/
 
-let pull_number: Number
+let pull_number: number
 if (PULL_NUMBER_REGEX.test(env.GITHUB_REF)) {
   pull_number = parseInt(env.GITHUB_REF.match(PULL_NUMBER_REGEX)![1], 10)
 }
@@ -44,7 +44,7 @@ async function run(): Promise<void> {
       pull_number
     })
     const filenames = files.data.map(file => file.filename)
-    core.debug(`Files being checked: ${JSON.stringify(files, null, 2)}`)
+    core.debug(`Files being checked: ${JSON.stringify(filenames, null, 2)}`)
 
     const ownerSet = new Set()
     const teamOwnerSet = new Set()
