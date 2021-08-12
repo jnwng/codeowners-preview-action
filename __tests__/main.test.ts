@@ -1,8 +1,13 @@
-import {wait} from '../src/wait'
 import * as process from 'process'
 import * as cp from 'child_process'
 import * as path from 'path'
 import {expect, test} from '@jest/globals'
+
+// Test reviewer threshold input
+// Test output
+// Test only team owner
+// Test only regular owners
+// Test no owners
 
 test('throws invalid number', async () => {
   const input = parseInt('foo', 10)

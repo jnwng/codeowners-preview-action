@@ -1,16 +1,58 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import Codeowners from 'codeowners'
+import {Octokit} from '@octokit/action'
 
+// https://github.com/octokit/action.js/#create-an-issue-using-rest-api
+// @ts-expect-error
+const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
+
+// https://github.com/actions/checkout/issues/58#issuecomment-545446510
+const PULL_NUMBER_REGEX = /refs\/pull\/(\d+)\/merge/
+// @ts-expect-error
+const [, pull_number] = process.env.GITHUB_REF?.match(PULL_NUMBER_REGEX)
+const octokit = new Octokit()
+
+const codeowners = new Codeowners()
+
+// One argument: the reviewer threshold.
+// One output: `aboveReviewerThreshold`
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
+    // Figure out what the changed files are
+    const files = await octokit.rest.pulls.listFiles({
+      owner,
+      repo,
+      pull_number
+    })
+    const filenames = files.data.map(file => file.filename)
+    core.debug(`Files being checked: ${JSON.stringify(files, null, 2)}`)
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const ownerSet = new Set()
+    const teamOwnerSet = new Set()
+    for (const filename of filenames) {
+      const owners = codeowners.getOwner(filename)
 
-    core.setOutput('time', new Date().toTimeString())
+      const teamOwnerPrefix = new RegExp(`@${owner}/`)
+      for (const ownerName of owners) {
+        if (teamOwnerPrefix.test(ownerName)) {
+          teamOwnerSet.add(ownerName)
+        } else {
+          ownerSet.add(ownerName)
+        }
+      }
+    }
+    core.debug(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+    core.debug(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+
+    const OWNER_THRESHOLD =
+      Number.parseInt(core.getInput('reviewerThreshold'), 10) || 5
+    if (ownerSet.size + teamOwnerSet.size > OWNER_THRESHOLD) {
+      // Comment back to the PR
+      // Label to trigger mise-en-place
+      core.setOutput('aboveReviewerThreshold', true)
+    } else {
+      core.setOutput('aboveReviewerThreshold', false)
+    }
   } catch (error) {
     core.setFailed(error.message)
   }
