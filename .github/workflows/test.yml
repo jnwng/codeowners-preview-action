@@ -22,5 +22,6 @@ jobs:
       - uses: ./
         env:
           ACTIONS_RUNNER_DEBUG: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           reviewerThreshold: 3
