@@ -44,7 +44,6 @@ export const getOwnersForFiles = (
   const teamOwnerSet = new Set<string>()
   for (const filename of filenames) {
     const owners = codeowners.getOwner(filename)
-    console.info({owners})
 
     for (const ownerName of owners) {
       if (teamOwnerPrefix.test(ownerName)) {
@@ -54,7 +53,7 @@ export const getOwnersForFiles = (
       }
     }
   }
-  console.log(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+  console.log(`Owners: ${JSON.stringify(ownerSet, null, 2)}`)
   console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
 
   return {ownerSet, teamOwnerSet}

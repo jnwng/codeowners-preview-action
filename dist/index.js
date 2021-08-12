@@ -76,7 +76,6 @@ const getOwnersForFiles = (filenames) => {
     const teamOwnerSet = new Set();
     for (const filename of filenames) {
         const owners = codeowners.getOwner(filename);
-        console.info({ owners });
         for (const ownerName of owners) {
             if (teamOwnerPrefix.test(ownerName)) {
                 teamOwnerSet.add(ownerName);
@@ -86,7 +85,7 @@ const getOwnersForFiles = (filenames) => {
             }
         }
     }
-    console.log(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
+    console.log(`Owners: ${JSON.stringify(ownerSet, null, 2)}`);
     console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
     return { ownerSet, teamOwnerSet };
 };
