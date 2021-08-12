@@ -38,10 +38,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getOwnersForFiles = void 0;
+/* eslint-disable no-console */
 const core = __importStar(__nccwpck_require__(2186));
 const codeowners_1 = __importDefault(__nccwpck_require__(9205));
 const action_1 = __nccwpck_require__(1231);
 const envalid_1 = __nccwpck_require__(2322);
+debugger;
 const env = envalid_1.cleanEnv(process.env, {
     GITHUB_REPOSITORY: envalid_1.str(),
     GITHUB_REF: envalid_1.str()
@@ -58,14 +61,36 @@ const octokit = new action_1.Octokit();
 const codeowners = new codeowners_1.default();
 const teamOwnerPrefix = new RegExp(`@${owner}/`);
 const allBuckets = {};
+// @ts-ignore
 for (const ownerEntry of codeowners.ownerEntries) {
     for (const username of ownerEntry.usernames) {
         if (teamOwnerPrefix.test(username)) {
+            // @ts-ignore
             allBuckets[username] = [...allBuckets[username], ownerEntry.path];
         }
     }
 }
 console.log(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`);
+const getOwnersForFiles = (filenames) => {
+    const ownerSet = new Set();
+    const teamOwnerSet = new Set();
+    for (const filename of filenames) {
+        const owners = codeowners.getOwner(filename);
+        console.info({ owners });
+        for (const ownerName of owners) {
+            if (teamOwnerPrefix.test(ownerName)) {
+                teamOwnerSet.add(ownerName);
+            }
+            else {
+                ownerSet.add(ownerName);
+            }
+        }
+    }
+    console.log(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
+    console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
+    return { ownerSet, teamOwnerSet };
+};
+exports.getOwnersForFiles = getOwnersForFiles;
 // One argument: the reviewer threshold.
 // One output: `aboveReviewerThreshold`
 function run() {
@@ -79,22 +104,7 @@ function run() {
             });
             const filenames = files.data.map(file => file.filename);
             console.log(`Files being checked: ${JSON.stringify(filenames, null, 2)}`);
-            const ownerSet = new Set();
-            const teamOwnerSet = new Set();
-            for (const filename of filenames) {
-                const owners = codeowners.getOwner(filename);
-                const teamOwnerPrefix = new RegExp(`@${owner}/`);
-                for (const ownerName of owners) {
-                    if (teamOwnerPrefix.test(ownerName)) {
-                        teamOwnerSet.add(ownerName);
-                    }
-                    else {
-                        ownerSet.add(ownerName);
-                    }
-                }
-            }
-            console.log(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
-            console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
+            const { ownerSet, teamOwnerSet } = exports.getOwnersForFiles(filenames);
             const OWNER_THRESHOLD = Number.parseInt(core.getInput('reviewerThreshold'), 10);
             if (ownerSet.size + teamOwnerSet.size > OWNER_THRESHOLD) {
                 // Comment back to the PR
@@ -111,7 +121,7 @@ function run() {
         }
     });
 }
-run();
+// run()
 
 
 /***/ }),
