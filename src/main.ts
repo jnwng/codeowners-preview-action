@@ -31,7 +31,7 @@ for (const ownerEntry of codeowners.ownerEntries) {
     }
   }
 }
-core.debug(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`)
+console.log(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`)
 
 // One argument: the reviewer threshold.
 // One output: `aboveReviewerThreshold`
@@ -44,7 +44,7 @@ async function run(): Promise<void> {
       pull_number
     })
     const filenames = files.data.map(file => file.filename)
-    core.debug(`Files being checked: ${JSON.stringify(filenames, null, 2)}`)
+    console.log(`Files being checked: ${JSON.stringify(filenames, null, 2)}`)
 
     const ownerSet = new Set()
     const teamOwnerSet = new Set()
@@ -60,8 +60,8 @@ async function run(): Promise<void> {
         }
       }
     }
-    core.debug(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
-    core.debug(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+    console.log(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+    console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
 
     const OWNER_THRESHOLD = Number.parseInt(
       core.getInput('reviewerThreshold'),
