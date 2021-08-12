@@ -65,7 +65,7 @@ for (const ownerEntry of codeowners.ownerEntries) {
         }
     }
 }
-core.debug(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`);
+console.log(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`);
 // One argument: the reviewer threshold.
 // One output: `aboveReviewerThreshold`
 function run() {
@@ -78,7 +78,7 @@ function run() {
                 pull_number
             });
             const filenames = files.data.map(file => file.filename);
-            core.debug(`Files being checked: ${JSON.stringify(filenames, null, 2)}`);
+            console.log(`Files being checked: ${JSON.stringify(filenames, null, 2)}`);
             const ownerSet = new Set();
             const teamOwnerSet = new Set();
             for (const filename of filenames) {
@@ -93,8 +93,8 @@ function run() {
                     }
                 }
             }
-            core.debug(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
-            core.debug(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
+            console.log(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
+            console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
             const OWNER_THRESHOLD = Number.parseInt(core.getInput('reviewerThreshold'), 10);
             if (ownerSet.size + teamOwnerSet.size > OWNER_THRESHOLD) {
                 // Comment back to the PR
