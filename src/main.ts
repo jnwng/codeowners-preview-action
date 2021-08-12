@@ -44,8 +44,10 @@ async function run(): Promise<void> {
     core.debug(`Owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
     core.debug(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
 
-    const OWNER_THRESHOLD =
-      Number.parseInt(core.getInput('reviewerThreshold'), 10) || 5
+    const OWNER_THRESHOLD = Number.parseInt(
+      core.getInput('reviewerThreshold'),
+      10
+    )
     if (ownerSet.size + teamOwnerSet.size > OWNER_THRESHOLD) {
       // Comment back to the PR
       // Label to trigger mise-en-place
