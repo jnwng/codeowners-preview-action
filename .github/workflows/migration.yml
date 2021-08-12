@@ -1,0 +1,39 @@
+name: Migration
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      branchName:
+        description: 'The branch that contains the migration script. All branches will be based off this branch.'
+        required: true
+      scriptPath:
+        description: 'Path to the migration script to run, relative to the repository root. Will be passed a glob pattern'
+        required: true
+
+jobs:
+  getBuckets:
+    runs-on: ubuntu-latest
+    steps:
+      - id: buckets
+        # Matching buckets, team owners and regular owners, and the list of their matches
+        #
+        # How to figure out the buckets?
+        # Get all teams via CODEOWNERS
+        # Once you have teams, reverse map CODEOWNERS to pass glob statements to the farming script
+        run: |
+          BUCKETS=["static/bundles/partners-graphql/**", "static/bundles/ondemand/**"]
+          echo '::set-output name=result::$BUCKETS'
+
+    outputs:
+      buckets: ${{ steps.buckets.outputs.result }}
+
+  # Actually this will receive a list of lists
+  migrate:
+    runs-on: ubuntu-latest
+    needs: getBuckets
+    strategy:
+      matrix:
+        bucket: ${{ fromJson(needs.getBuckets.outputs.buckets) }}
+    steps:
+      - echo ${{ matrix.bucket }}

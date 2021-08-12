@@ -1,18 +1,27 @@
 import * as core from '@actions/core'
 import Codeowners from 'codeowners'
-import {Octokit} from '@octokit/action'
+// import {Octokit} from '@octokit/action'
 
 // https://github.com/octokit/action.js/#create-an-issue-using-rest-api
-// @ts-expect-error
 const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
 
 // https://github.com/actions/checkout/issues/58#issuecomment-545446510
 const PULL_NUMBER_REGEX = /refs\/pull\/(\d+)\/merge/
-// @ts-expect-error
-const [, pull_number] = process.env.GITHUB_REF?.match(PULL_NUMBER_REGEX)
+const [, pull_number] = process.env.GITHUB_REF.match(PULL_NUMBER_REGEX)
 const octokit = new Octokit()
 
 const codeowners = new Codeowners()
+
+const teamOwnerPrefix = new RegExp(`@${owner}/`)
+const allBuckets = {}
+for (const ownerEntry of codeowners.ownerEntries) {
+  for (const username of ownerEntry.usernames) {
+    if (teamOwnerPrefix.test(username)) {
+      allBuckets[username] = [...allBuckets[username], ownerEntry.path]
+    }
+  }
+}
+core.debug(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`)
 
 // One argument: the reviewer threshold.
 // One output: `aboveReviewerThreshold`
@@ -55,6 +64,8 @@ async function run(): Promise<void> {
     } else {
       core.setOutput('aboveReviewerThreshold', false)
     }
+
+    // This is where we take the subset of buckets
   } catch (error) {
     core.setFailed(error.message)
   }
