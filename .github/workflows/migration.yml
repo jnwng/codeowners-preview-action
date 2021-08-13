@@ -1,0 +1,51 @@
+name: Migration
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      branchName:
+        description: 'The branch that contains the migration script. All branches will be based off this branch.'
+        required: true
+      scriptPath:
+        description: 'Path to the migration script to run, relative to the repository root. Will be passed a glob pattern'
+        required: true
+
+jobs:
+  teamOwners:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - id: codeowners-preview
+        uses: ./
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          reviewerThreshold: 3
+      - run: echo '${{ steps.codeowners-preview.outputs.teamOwners}}' | jq .
+
+    outputs:
+      teams: ${{ steps.codeowners-preview.outputs.teamOwners }}
+
+  migrate:
+    needs: teamOwners
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bucket: ${{ fromJson(needs.teamOwners.outputs.teams) }}
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo ${{ matrix.bucket.team }}
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Scope by PR number
+        run: |
+          touch .${{ matrix.bucket.paths[0] }}foo.txt
+          git config --global user.email "fake-email@example.com"
+          git config --global user.name "automation!"
+          git checkout -b mep/6-${{matrix.bucket.team}}
+          git add -A
+          git commit -m "test commit"
+          git push --force --set-upstream origin mep/6-${{matrix.bucket.team}}
+          git fetch origin main
+          gh pr create --draft --title "Breakdown PR for ${{ matrix.bucket.team}}" --fill
