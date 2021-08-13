@@ -22,10 +22,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           reviewerThreshold: 3
-      - run: echo ${{ steps.codeowners-preview.teamOwners}}
+      - run: echo ${{ steps.codeowners-preview.outputs.teamOwners}}
       - id: set-matrix
         run: |
-          echo ${{ steps.codeowners-preview.teamOwners}} | jq .
+          echo ${{ steps.codeowners-preview.outputs.teamOwners}} | jq .
           echo "::set-output name=matrix::$matrix"
 
     outputs:
