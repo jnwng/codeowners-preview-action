@@ -22,15 +22,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           reviewerThreshold: 3
+      - run: echo ${{ steps.codeowners-preview.teamOwners}}
+      - id: set-matrix
+        run: |
+          echo ${{ steps.codeowners-preview.teamOwners}} | jq .
+          echo "::set-output name=matrix::$matrix"
 
     outputs:
-      teams: ${{ steps.codeowners-preview.teamOwners }}
+      teams: ${{ steps.set-matrix.outputs.matrix }}
 
   migrate:
     needs: teamOwners
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        team: ${{ fromJson(needs.teamOwners.outputs.teams) }}
+        bucket: ${{ fromJson(needs.teamOwners.outputs.teams) }}
     steps:
-      - run: echo ${{ matrix.team }}
+      - run: echo ${{ matrix.bucket }}
+      - run: echo ${{ matrix.bucket.team }}
