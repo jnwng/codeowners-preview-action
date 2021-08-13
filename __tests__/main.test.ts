@@ -2,7 +2,6 @@ import * as process from 'process'
 import * as cp from 'child_process'
 import * as path from 'path'
 import {expect, test} from '@jest/globals'
-import {getOwnersForFiles} from '../src/main'
 
 // Test reviewer threshold input
 // Test output
@@ -14,9 +13,12 @@ describe('codeowners-preview', () => {
   beforeAll(() => {
     process.env['GITHUB_REF'] = 'refs/pulls/6/merge'
     process.env['GITHUB_REPOSITORY'] = 'jnwng/codeowners-preview-action'
+    process.env['GITHUB_ACTION'] = 'true'
+    process.env['GITHUB_TOKEN'] = 'FAKE-TOKEN'
   })
 
   test('creates owner sets', () => {
+    const {getOwnersForFiles} = require('../src/main')
     const filenames = [
       '.github/workflows/migration.yml',
       '.github/workflows/test.yml',
@@ -44,7 +46,9 @@ Object {
     "@jnwng-4",
     "@jnwng-5",
   },
-  "teamOwnerSet": Set {},
+  "teamOwnerSet": Set {
+    "@jnwng/team-prefix",
+  },
 }
 `)
   })

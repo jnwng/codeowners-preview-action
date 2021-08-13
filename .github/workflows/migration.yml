@@ -1,7 +1,7 @@
 name: Migration
 
 on:
-  # pull_request:
+  pull_request:
   workflow_dispatch:
     inputs:
       branchName:
@@ -12,30 +12,25 @@ on:
         required: true
 
 jobs:
-  getBuckets:
+  teamOwners:
     runs-on: ubuntu-latest
     steps:
-      - id: buckets
-        # Matching buckets, team owners and regular owners, and the list of their matches
-        #
-        # How to figure out the buckets?
-        # Get all teams via CODEOWNERS
-        # Once you have teams, reverse map CODEOWNERS to pass glob statements to the farming script
-        # Buckets will have the codeowner + the list of bundles
-        # Report back to comment on original PR
-        run: |
-          BUCKETS=["static/bundles/partners-graphql/**", "static/bundles/ondemand/**"]
-          echo '::set-output name=result::$BUCKETS'
+      - uses: actions/checkout@v2
+      - id: codeowners-preview
+        uses: ./
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          reviewerThreshold: 3
 
     outputs:
-      buckets: ${{ steps.buckets.outputs.result }}
+      teams: ${{ steps.codeowners-preview.teamOwners }}
 
-  # Actually this will receive a list of lists
   migrate:
+    needs: teamOwners
     runs-on: ubuntu-latest
-    needs: getBuckets
-    # strategy:
-    #   matrix:
-    # bucket: ${{ fromJson(needs.getBuckets.outputs.buckets) }}
+    strategy:
+      matrix:
+        team: ${{ fromJson(needs.teamOwners.outputs.teams) }}
     steps:
-      - run: echo ${{ matrix.bucket }}
+      - run: echo ${{ matrix.team }}

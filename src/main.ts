@@ -4,8 +4,6 @@ import Codeowners from 'codeowners'
 import {Octokit} from '@octokit/action'
 import {cleanEnv, str} from 'envalid'
 
-debugger
-
 const env = cleanEnv(process.env, {
   GITHUB_REPOSITORY: str(),
   GITHUB_REF: str()
@@ -25,17 +23,21 @@ const octokit = new Octokit()
 const codeowners = new Codeowners()
 
 const teamOwnerPrefix = new RegExp(`@${owner}/`)
-const allBuckets = {}
+const teamBuckets: Record<string, string[]> = {}
 // @ts-ignore
 for (const ownerEntry of codeowners.ownerEntries) {
   for (const username of ownerEntry.usernames) {
     if (teamOwnerPrefix.test(username)) {
-      // @ts-ignore
-      allBuckets[username] = [...allBuckets[username], ownerEntry.path]
+      if (teamBuckets[username]) {
+        teamBuckets[username] = [...teamBuckets[username], ownerEntry.path]
+      } else {
+        teamBuckets[username] = [ownerEntry.path]
+      }
+      teamBuckets[username] = [...teamBuckets[username], ownerEntry.path]
     }
   }
 }
-console.log(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`)
+console.log(`Team buckets: ${JSON.stringify(teamBuckets, null, 2)}`)
 
 export const getOwnersForFiles = (
   filenames: string[]
@@ -53,8 +55,10 @@ export const getOwnersForFiles = (
       }
     }
   }
-  console.log(`Owners: ${JSON.stringify(ownerSet, null, 2)}`)
-  console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`)
+  console.log(`Owners: ${JSON.stringify(Array.from(ownerSet), null, 2)}`)
+  console.log(
+    `Team owners: ${JSON.stringify(Array.from(teamOwnerSet), null, 2)}`
+  )
 
   return {ownerSet, teamOwnerSet}
 }
@@ -90,6 +94,9 @@ async function run(): Promise<void> {
   } catch (error) {
     core.setFailed(error.message)
   }
+
+  // Sets a map of teams to owned paths to be farmed out
+  core.setOutput('teamOwners', teamBuckets)
 }
 
 run()
