@@ -44,6 +44,7 @@ jobs:
           git config --global user.email "fake-email@example.com"
           git config --global user.name "automation!"
           git checkout -b mep/6-${{matrix.bucket.team}}
-          git commit -am "test commit"
+          git add -A
+          git commit -m "test commit"
           git push
           gh pr create --draft --title "Breakdown PR for ${{ matrix.bucket.team}}" --fill
