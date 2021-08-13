@@ -36,7 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: echo ${{ matrix.bucket.team }}
-      - run: |
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           touch .${{ matrix.bucket.paths[0] }}foo.txt
           git config --global user.email "fake-email@example.com"
           git config --global user.name "automation!"
