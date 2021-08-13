@@ -23,19 +23,23 @@ const octokit = new Octokit()
 const codeowners = new Codeowners()
 
 const teamOwnerPrefix = new RegExp(`@${owner}/`)
-const teamBuckets: Record<string, string[]> = {}
+const teamBucketMap: Record<string, Set<string>> = {}
 // @ts-ignore
 for (const ownerEntry of codeowners.ownerEntries) {
   for (const username of ownerEntry.usernames) {
     if (teamOwnerPrefix.test(username)) {
-      if (teamBuckets[username]) {
-        teamBuckets[username] = [...teamBuckets[username], ownerEntry.path]
+      if (teamBucketMap[username]) {
+        teamBucketMap[username].add(ownerEntry.path)
       } else {
-        teamBuckets[username] = [ownerEntry.path]
+        teamBucketMap[username] = new Set([ownerEntry.path])
       }
-      teamBuckets[username] = [...teamBuckets[username], ownerEntry.path]
     }
   }
+}
+
+const teamBuckets: object[] = []
+for (const team of Object.keys(teamBucketMap)) {
+  teamBuckets.push({team, paths: Array.from(teamBucketMap[team])})
 }
 console.log(`Team buckets: ${JSON.stringify(teamBuckets, null, 2)}`)
 
