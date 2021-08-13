@@ -22,7 +22,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           reviewerThreshold: 3
-      - run: echo '${{ steps.codeowners-preview.outputs.teamOwners}}' | jq.
+      - run: echo '${{ steps.codeowners-preview.outputs.teamOwners}}' | jq .
 
     outputs:
       teams: ${{ steps.codeowners-preview.outputs.teamOwners }}
