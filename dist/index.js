@@ -44,7 +44,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const codeowners_1 = __importDefault(__nccwpck_require__(9205));
 const action_1 = __nccwpck_require__(1231);
 const envalid_1 = __nccwpck_require__(2322);
-debugger;
 const env = envalid_1.cleanEnv(process.env, {
     GITHUB_REPOSITORY: envalid_1.str(),
     GITHUB_REF: envalid_1.str()
@@ -60,17 +59,22 @@ if (PULL_NUMBER_REGEX.test(env.GITHUB_REF)) {
 const octokit = new action_1.Octokit();
 const codeowners = new codeowners_1.default();
 const teamOwnerPrefix = new RegExp(`@${owner}/`);
-const allBuckets = {};
+const teamBuckets = {};
 // @ts-ignore
 for (const ownerEntry of codeowners.ownerEntries) {
     for (const username of ownerEntry.usernames) {
         if (teamOwnerPrefix.test(username)) {
-            // @ts-ignore
-            allBuckets[username] = [...allBuckets[username], ownerEntry.path];
+            if (teamBuckets[username]) {
+                teamBuckets[username] = [...teamBuckets[username], ownerEntry.path];
+            }
+            else {
+                teamBuckets[username] = [ownerEntry.path];
+            }
+            teamBuckets[username] = [...teamBuckets[username], ownerEntry.path];
         }
     }
 }
-console.log(`Owner buckets: ${JSON.stringify(allBuckets, null, 2)}`);
+console.log(`Team buckets: ${JSON.stringify(teamBuckets, null, 2)}`);
 const getOwnersForFiles = (filenames) => {
     const ownerSet = new Set();
     const teamOwnerSet = new Set();
@@ -85,8 +89,8 @@ const getOwnersForFiles = (filenames) => {
             }
         }
     }
-    console.log(`Owners: ${JSON.stringify(ownerSet, null, 2)}`);
-    console.log(`Team owners: ${JSON.stringify(teamOwnerSet, null, 2)}`);
+    console.log(`Owners: ${JSON.stringify(Array.from(ownerSet), null, 2)}`);
+    console.log(`Team owners: ${JSON.stringify(Array.from(teamOwnerSet), null, 2)}`);
     return { ownerSet, teamOwnerSet };
 };
 exports.getOwnersForFiles = getOwnersForFiles;
@@ -118,6 +122,8 @@ function run() {
         catch (error) {
             core.setFailed(error.message);
         }
+        // Sets a map of teams to owned paths to be farmed out
+        core.setOutput('teamOwners', teamBuckets);
     });
 }
 run();
