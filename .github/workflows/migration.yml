@@ -34,6 +34,7 @@ jobs:
       matrix:
         bucket: ${{ fromJson(needs.teamOwners.outputs.teams) }}
     steps:
+      - uses: actions/checkout@v2
       - run: echo ${{ matrix.bucket.team }}
       - run: |
           touch .${{ matrix.bucket.paths[0] }}foo.txt
