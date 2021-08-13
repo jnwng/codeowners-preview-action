@@ -38,10 +38,12 @@ jobs:
       - run: echo ${{ matrix.bucket.team }}
       - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Scope by PR number
         run: |
           touch .${{ matrix.bucket.paths[0] }}foo.txt
           git config --global user.email "fake-email@example.com"
           git config --global user.name "automation!"
+          git checkout -b mep/6-${{matrix.bucket.team}}
           git add -A
           git commit -m "Test commit!"
           gh pr create --draft --title "Breakdown PR for ${{ matrix.bucket.team}}" --fill
