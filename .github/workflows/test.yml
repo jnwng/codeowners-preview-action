@@ -20,5 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./
+        env:
+          ACTIONS_STEP_DEBUG: true
+          ACTIONS_RUNNER_DEBUG: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          milliseconds: 1000
+          reviewerThreshold: 3

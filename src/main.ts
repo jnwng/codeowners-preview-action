@@ -1,19 +1,106 @@
+/* eslint-disable no-console */
 import * as core from '@actions/core'
-import {wait} from './wait'
+import Codeowners from 'codeowners'
+import {Octokit} from '@octokit/action'
+import {cleanEnv, str} from 'envalid'
 
+const env = cleanEnv(process.env, {
+  GITHUB_REPOSITORY: str(),
+  GITHUB_REF: str()
+})
+
+// https://github.com/octokit/action.js/#create-an-issue-using-rest-api
+const [owner, repo] = env.GITHUB_REPOSITORY.split('/')
+
+// https://github.com/actions/checkout/issues/58#issuecomment-545446510
+const PULL_NUMBER_REGEX = /refs\/pull\/(\d+)\/merge/
+
+let pull_number: number
+if (PULL_NUMBER_REGEX.test(env.GITHUB_REF)) {
+  pull_number = parseInt(env.GITHUB_REF.match(PULL_NUMBER_REGEX)![1], 10)
+}
+const octokit = new Octokit()
+const codeowners = new Codeowners()
+
+const teamOwnerPrefix = new RegExp(`@${owner}/`)
+const teamBucketMap: Record<string, Set<string>> = {}
+// @ts-ignore
+for (const ownerEntry of codeowners.ownerEntries) {
+  for (const username of ownerEntry.usernames) {
+    if (teamOwnerPrefix.test(username)) {
+      if (teamBucketMap[username]) {
+        teamBucketMap[username].add(ownerEntry.path)
+      } else {
+        teamBucketMap[username] = new Set([ownerEntry.path])
+      }
+    }
+  }
+}
+
+const teamBuckets: object[] = []
+for (const team of Object.keys(teamBucketMap)) {
+  teamBuckets.push({team, paths: Array.from(teamBucketMap[team])})
+}
+console.log(`Team buckets: ${JSON.stringify(teamBuckets, null, 2)}`)
+
+export const getOwnersForFiles = (
+  filenames: string[]
+): {ownerSet: Set<string>; teamOwnerSet: Set<string>} => {
+  const ownerSet = new Set<string>()
+  const teamOwnerSet = new Set<string>()
+  for (const filename of filenames) {
+    const owners = codeowners.getOwner(filename)
+
+    for (const ownerName of owners) {
+      if (teamOwnerPrefix.test(ownerName)) {
+        teamOwnerSet.add(ownerName)
+      } else {
+        ownerSet.add(ownerName)
+      }
+    }
+  }
+  console.log(`Owners: ${JSON.stringify(Array.from(ownerSet), null, 2)}`)
+  console.log(
+    `Team owners: ${JSON.stringify(Array.from(teamOwnerSet), null, 2)}`
+  )
+
+  return {ownerSet, teamOwnerSet}
+}
+
+// One argument: the reviewer threshold.
+// One output: `aboveReviewerThreshold`
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
+    // Figure out what the changed files are
+    const files = await octokit.rest.pulls.listFiles({
+      owner,
+      repo,
+      pull_number
+    })
+    const filenames = files.data.map(file => file.filename)
+    console.log(`Files being checked: ${JSON.stringify(filenames, null, 2)}`)
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const {ownerSet, teamOwnerSet} = getOwnersForFiles(filenames)
 
-    core.setOutput('time', new Date().toTimeString())
+    const OWNER_THRESHOLD = Number.parseInt(
+      core.getInput('reviewerThreshold'),
+      10
+    )
+    if (ownerSet.size + teamOwnerSet.size > OWNER_THRESHOLD) {
+      // Comment back to the PR
+      // Label to trigger mise-en-place
+      core.setOutput('aboveReviewerThreshold', true)
+    } else {
+      core.setOutput('aboveReviewerThreshold', false)
+    }
+
+    // This is where we take the subset of buckets
   } catch (error) {
     core.setFailed(error.message)
   }
+
+  // Sets a map of teams to owned paths to be farmed out
+  core.setOutput('teamOwners', teamBuckets)
 }
 
 run()

@@ -2,10 +2,10 @@ name: 'Your name here'
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
-  milliseconds: # change this
-    required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  reviewerThreshold:
+    required: false
+    description: 'The number of reviewers above which one wants may want to respond to'
+    default: 5
 runs:
   using: 'node12'
-  main: 'dist/index.js'
+  main: './dist/index.js'
