@@ -38,6 +38,8 @@ jobs:
       - run: echo ${{ matrix.bucket.team }}
       - run: |
           touch .${{ matrix.bucket.paths[0] }}foo.txt
+          git config --global user.email "fake-email@example.com"
+          git config --global user.name "automation!"
           git add -A
           git commit -m "Test commit!"
           gh pr create --draft
