@@ -34,5 +34,11 @@ jobs:
       matrix:
         bucket: ${{ fromJson(needs.teamOwners.outputs.teams) }}
     steps:
-      - run: echo ${{ matrix.bucket }}
       - run: echo ${{ matrix.bucket.team }}
+      # Add more context to the PR
+      - run: |
+        touch ${{ matrix.bucket.paths[0] }}/foo.txt
+        git add -A
+        git commit -m "Test commit!"
+        gh pr create --draft 
+
