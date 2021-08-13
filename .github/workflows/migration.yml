@@ -46,5 +46,5 @@ jobs:
           git checkout -b mep/6-${{matrix.bucket.team}}
           git add -A
           git commit -m "test commit"
-          git push
+          git push --set-upstream origin mep/6-${{matrix.bucket.team}}
           gh pr create --draft --title "Breakdown PR for ${{ matrix.bucket.team}}" --fill
