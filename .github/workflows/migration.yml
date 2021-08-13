@@ -36,8 +36,7 @@ jobs:
     steps:
       - run: echo ${{ matrix.bucket.team }}
       - run: |
-          touch ${{ matrix.bucket.paths[0] }}/foo.txt
+          touch .${{ matrix.bucket.paths[0] }}foo.txt
           git add -A
           git commit -m "Test commit!"
-          gh pr create --draft 
-
+          gh pr create --draft
